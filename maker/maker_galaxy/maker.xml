@@ -1,3 +1,10 @@
+<!--
+Copyright (C) 2012- The University of Notre Dame
+#This software is distributed under the GNU General Public License.
+#See the file COPYING for details.
+#
+-->
+
 <tool id="dist_maker" name="DistMaker" version="0.0.1">
   <description>Run MAKER in parallel using work queue</description>
 
