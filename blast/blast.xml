@@ -1,0 +1,109 @@
+<tool id="dist_blast" name="DistBlast" version="0.0.1">
+  <description>Run BLAST in parallel</description>
+
+  <command interpreter="perl">
+     blast.pl $query 
+     #if $db_opts.db_opts_selector == "db":
+        -db "${db_opts.database.fields.path}"
+     #else:
+        -subject "$db_opts.subject"
+     blastp
+     8
+   </command>
+
+   <inputs>
+     <param name="query" type="data" format="fasta" label="query sequences"/>
+     <conditional name="db_opts">
+	<param name="db_opts_selector" type="select" label="Subject database/sequences">
+ 	   <option value="db" selected="True">BLAST Database</option>
+	   <option value="file">FASTA file</option>
+	</param>
+            <when value="db">
+                <param name="database" type="select" label="Nucleotide BLAST database">
+                    <options from_file="blastdb.loc">
+                      <column name="value" index="0"/>
+                      <column name="name" index="1"/>
+                      <column name="path" index="2"/>
+                    </options>
+                </param>
+                <param name="subject" type="hidden" value="" /> 
+            </when>
+            <when value="file">
+                <param name="database" type="hidden" value="" /> 
+                <param name="subject" type="data" format="fasta" label="Nucleotide FASTA file to use as database"/> 
+            </when>
+        </conditional>
+         <param name="blast_type" type="select" display="radio" label="Type of BLAST">
+            <option value="megablast">megablast</option>
+            <option value="blastn">blastn</option>
+            <option value="blastn-short">blastn-short</option>
+            <option value="dc-megablast">dc-megablast</option>
+            <!-- Using BLAST 2.2.24+ this gives an error:
+            BLAST engine error: Program type 'vecscreen' not supported
+            <option value="vecscreen">vecscreen</option>
+            -->
+        </param>
+         <param name="evalue_cutoff" type="float" size="15" value="0.001" label="Set expectation value cutoff" />
+        <param name="out_format" type="select" label="Output format">
+            <option value="6" selected="True">Tabular (standard 12 columns)</option>
+            <option value="6 std sallseqid score nident positive gaps ppos qframe sframe qseq sseq">Tabular (extended 22 columns)</option>
+            <option value="5">BLAST XML</option>
+            <option value="0">Pairwise text</option>
+            <option value="0 -html">Pairwise HTML</option>
+            <option value="2">Query-anchored text</option>
+            <option value="2 -html">Query-anchored HTML</option>
+            <option value="4">Flat query-anchored text</option>
+            <option value="4 -html">Flat query-anchored HTML</option>
+            <!--
+            <option value="-outfmt 11">BLAST archive format (ASN.1)</option>
+            -->
+        </param>
+        <conditional name="adv_opts">
+            <param name="adv_opts_selector" type="select" label="Advanced Options">
+              <option value="basic" selected="True">Hide Advanced Options</option>
+              <option value="advanced">Show Advanced Options</option>
+            </param>
+            <when value="basic" />
+            <when value="advanced">
+                <!-- Could use a select (yes, no, other) where other allows setting 'level window linker' -->
+                <param name="filter_query" type="boolean" label="Filter out low complexity regions (with DUST)" truevalue="-dust yes" falsevalue="-dust no" checked="true" />
+                <param name="strand" type="select" label="Query strand(s) to search against database/subject">
+                    <option value="-strand both">Both</option>
+                    <option value="-strand plus">Plus (forward)</option>
+                    <option value="-strand minus">Minus (reverse complement)</option>
+                </param>
+                <!-- Why doesn't optional override a validator? I want to accept an empty string OR a non-negative integer -->
+                <param name="max_hits" type="integer" value="0" label="Maximum hits to show" help="Use zero for default limits">
+                    <validator type="in_range" min="0" />
+                </param>
+                <!-- I'd like word_size to be optional, with minimum 4 for blastn -->
+                <param name="word_size" type="integer" value="0" label="Word size for wordfinder algorithm" help="Use zero for default, otherwise minimum 4.">
+                    <validator type="in_range" min="0" />
+                </param>
+                <param name="ungapped" type="boolean" label="Perform ungapped alignment only?" truevalue="-ungapped" falsevalue="" checked="false" />
+                <param name="parse_deflines" type="boolean" label="Should the query and subject defline(s) be parsed?" truevalue="-parse_deflines" falsevalue="" checked="false" help="This affects the formatting of the query/subject ID strings"/>
+            </when>
+        </conditional>
+    </inputs>
+     <outputs>
+        <data name="output1" format="tabular" label="${blast_type.value_label} on ${db_opts.db_opts_selector}">
+            <change_format>
+                <when input="out_format" value="0" format="txt"/>
+                <when input="out_format" value="0 -html" format="html"/>
+                <when input="out_format" value="2" format="txt"/>
+                <when input="out_format" value="2 -html" format="html"/>
+                <when input="out_format" value="4" format="txt"/>
+                <when input="out_format" value="4 -html" format="html"/>
+                <when input="out_format" value="5" format="blastxml"/>
+            </change_format>
+        </data>
+    </outputs>
+    <requirements>
+        <requirement type="binary">blastn</requirement>
+    </requirements>
+    <tests>
+    </tests>
+    <help>
+    </help>
+</tool>  
+
