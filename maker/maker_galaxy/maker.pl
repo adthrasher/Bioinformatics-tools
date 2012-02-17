@@ -6,9 +6,7 @@
 
 #!/usr/bin/perl
 
-
 use Getopt::Long;
-#use GI; 
 
 my %opt;
 GetOptions("genome=s" => \$opt{genome},
@@ -40,24 +38,19 @@ GetOptions("genome=s" => \$opt{genome},
 	   "error=s" => \$opt{error}
 	);
 
-#print STDERR %opt."\n"; 
 foreach $el (keys %opt){
 	if($opt{$el} eq "None"){
 		$opt{$el} = "";
 	}
 	$val = $opt{$el}; 
-#	print STDERR "$el = $val\n";
 }
 
 #generate the generic control files
-#GI::generate_control_files(); 
 $result = `maker_wq -CTL`; 
 #read the whole control file in
 open(FILE, "maker_opts.ctl"); 
 my $text = do{local $/;<FILE>};
 close FILE;
-#print "initial text:\n";  
-#print "$text\n"; 
 #now we need to place all of the options into the control file
 $val = $opt{genome}; 
 $text =~ s/genome:/genome:$val/; 
@@ -77,7 +70,7 @@ $val = $opt{protein_gff};
 $text =~ s/protein_gff:/protein_gff:$val/;
 $val = $opt{repeat_protein}; 
 if($val ne ""){
-	$text =~ s/repeat_protein:\/afs\/nd.edu\/user37\/ccl\/software\/external\/maker-203\/data\/te_proteins.fasta/repeat_protein:$val/; 
+	$text =~ s/repeat_protein:.*\/te_proteins.fasta/repeat_protein:$val/; 
 }
 $val = $opt{rmlib};
 $text =~ s/rmlib:/rmlib:$val/;
@@ -117,23 +110,18 @@ if($opt{protein2genome}){
 $pred .= "protein2genome,"; 
 }
 $text =~ s/predictor:/predictor:$pred/; 
-#print "final text\n"; 
-#print "$text\n"; 
-#print "$pred\n"; 
-#$h = $opt{est2genome}; 
-#print "est2genome: $h\n";
+
 `rm maker_opts.ctl`; 
+
 open(FILE, ">", "maker_opts.ctl"); 
 print FILE $text; 
-close FILE; 
-`cp /afs/crc.nd.edu/user/a/athrash1/Public/maker_exe.ctl .`;
-#`condor_submit_workers helix.cse.nd.edu 9156 50`;
+close FILE;
+#need a pre-designed maker_exe.ctl file that gives the locations of all the executables necessary 
+`cp /path/to/maker_exe.ctl .`;
 $error = $opt{error};
 $output = $opt{output}; 
-print STDERR " /afs/crc.nd.edu/group/NDBL/athrash1/work/maker/maker-203/bin/maker_wq -N biocompute-a -port 9156 >& $error\n"; 
-`/afs/crc.nd.edu/group/NDBL/athrash1/work/maker/maker-203/bin/maker_wq -N biocompute-a -port 9156 >& $error`;
+print STDERR "maker_wq -N biocompute-a -port -1 >& $error\n"; 
+`maker_wq -N biocompute-a -port -1 >& $error`;
 `touch output`;
 print "find . -name \"*.gff\" -exec cat {} \\; >> $output"; 
 `find . -name "*.gff" -exec cat {} \\; >> $output`;
-
-`sleep 60`; 

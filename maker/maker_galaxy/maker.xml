@@ -137,7 +137,6 @@ Copyright (C) 2012- The University of Notre Dame
         </data>
     </outputs>
     <requirements>
-        <!--<requirement type="binary">blastn</requirement>-->
     </requirements>
     <tests>
     </tests>

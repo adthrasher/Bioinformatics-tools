@@ -1,8 +1,10 @@
+#Maker Copyright University of Utah
 #
 #Copyright (C) 2012- The University of Notre Dame
 #This software is distributed under the GNU General Public License.
 #See the file COPYING for details.
 #
+
 
 #!/usr/bin/env perl
 
@@ -299,31 +301,12 @@ my $tierLimit = -1;#100;
 ## @INC is modified at top of script
 my $command = "";
 
-if($bird == 1) {
-	$command .= "/afs/nd.edu/user37/ccl/software/cctools/bin/parrot";
-	$wkDirPrefix = "/chirp/cclws08.cse.nd.edu:9095/";
-}
-else { 
-	#$wkDirPrefix = "/afs/nd.edu/user37/ccl/work/zmusgrav/maker/"; #"/tmp/ztm-maker/"; 
-	#$wkDirPrefix = "/tmp/athrash1/tmp/";
-	#$wkDirPrefix = `pwd`;
-	$wkDirPrefix = cwd();
-	#print "wd = $wkDirPrefix\n"; 
-	#print "cwd = ".cwd()."\n";
-	chomp($wkDirPrefix); 
-	$wkDirPrefix =~ s/\n//g;
-	$wkDirPrefix .= "/";
-}
-#$command .= "/afs/crc.nd.edu/group/NDBL/athrash1/work/maker/maker-203/bin/maker_wq_worker";
-#$command .= "/afs/crc.nd.edu/user/a/athrash1/Public/work/maker-203/bin/maker_wq_worker"; 
-#$command .= "/afs/nd.edu/user10/athrash1/Public/maker_wq_worker";
+$wkDirPrefix = cwd();
+chomp($wkDirPrefix); 
+$wkDirPrefix =~ s/\n//g;
+$wkDirPrefix .= "/";
 
-
-#$command .= "env SFX_EXTRACT_FORCE=1 SFX_DIR=. ./maker_wq_worker";
 $command .= "./maker_wq_worker";
-#$command .= "/afs/crc.nd.edu/group/NDBL/athrash1/work/maker/maker-203/bin/maker_wq_worker";
-
-#$command .= "/afs/nd.edu/user37/ccl/software/external/maker-203/bin/maker_wq_worker";
 
 #my $port = $work_queue::WORK_QUEUE_DEFAULT_PORT;
 my $port = "9135";
@@ -345,8 +328,7 @@ if(defined($OPT{"project"}))
 	work_queue::work_queue_specify_master_mode($queue, 1);
 
 }
-#work_queue::cctools_debug(0x000000, "%s"); 
-work_queue::cctools_debug_flags_set("all");
+#work_queue::cctools_debug_flags_set("all");
 my $fa = work_queue::work_queue_activate_fast_abort($queue, $multiplier); 
 
 if(defined($queue)){
@@ -366,32 +348,24 @@ sub SubmitTask {
 	my($counter) = @_;
 	
 	my $inFile = $counter."_todo.tier";
-	##my $outFile = $counter.".fasta";
 	
 	### ztm :: new task, set its I/O parms
 	print "Creating task $counter\n"; 
-	my $task = work_queue::work_queue_task_create("$command $counter"); # >& $counter.logfile
-	### note the bizarre parms for specifying files - read the work_queue api spec CAREFULLY!
+	my $task = work_queue::work_queue_task_create("$command $counter"); 
 	print "Specifying input $wkDirPrefix$inFile\n";
 	work_queue::work_queue_task_specify_input_file_do_not_cache($task, $wkDirPrefix.$inFile, $inFile);
 
 #	print "Specifying the worker executable ./maker.sfx\n"; 
-	print "Specifying the worker executable /afs/crc.nd.edu/group/NDBL/athrash1/work/maker/maker-203/bin/maker_wq_worker \n";
+	print "Specifying the worker executable maker_wq_worker \n";
 
-	#work_queue::work_queue_task_specify_input_file_do_not_cache($task, "/afs/nd.edu/user10/athrash1/Public/maker.sfx", "maker_wq_worker"); 
-
-
-#	work_queue::work_queue_task_specify_input_file_do_not_cache($task, "./maker.sfx", "maker_wq_worker"); 
-	work_queue::work_queue_task_specify_input_file_do_not_cache($task, "/afs/crc.nd.edu/group/NDBL/athrash1/work/maker/maker-203/bin/maker_wq_worker", "maker_wq_worker");
+	work_queue::work_queue_task_specify_input_file_do_not_cache($task, "maker_wq_worker", "maker_wq_worker");
 
 
-	###work_queue::work_queue_task_specify_output_file_do_not_cache($task, $outFile, $wkDirPrefix.$outFile);
 	print "Specifying tag $counter \n"; 
 	work_queue::work_queue_task_specify_tag($task, "$counter"); #parm2 must be a string
 	print "Submitting the task\n"; 
 	work_queue::work_queue_submit($queue, $task);
 	print "Task submitted\n"; 
-	# work_queue::work_queue_task::swig_command_line_get($task)
 	print "Created task with command: $command and counter $counter\n";
 	print "Task data: $wkDirPrefix$inFile\n"; 
 	return 1;
@@ -418,7 +392,6 @@ sub GenTiers {
 	my $tier;
 	my $numTiers = 0;
 	while (my $fasta = $iterator->nextFasta() ) {
-		#print $fasta."\n"; 
 		$tier = Process::MpiTiers->new({fasta =>$fasta,
 		    CTL_OPT => \%CTL_OPT,
 		    DS_CTL  => $DS_CTL,
@@ -427,12 +400,6 @@ sub GenTiers {
 		   '0',
 		   'Process::MpiChunk'
 		   );
-		##if($numTiers == 0) { 
-		##	print "\n\n ---- original tier ---- \n\n";
-		##	print Dumper($tier); 
-		##	
-		##	exit; 
-		##}
 		print "On tier $numTiers\n"; 
 		nstore \$tier, ($numTiers."_todo.tier");
 		
@@ -451,19 +418,15 @@ print "Submitting \n";
 BuildSubmit($initialSubmit);
 print "Work Queue :: initial submission :: $initialSubmit tiers \n";
 
-###exit;
 open(LOG, ">>", "logfile"); 
 print LOG "#start\n";
-#open(ERR, ">>", "errors");  
 my $old_seconds = 0;
 while(!work_queue::work_queue_empty($queue)) {
-#   	my $old_seconds;
 	my($t1, $t3) = gettimeofday;	
 	my $task = work_queue::work_queue_wait($queue, -1); # wait 30 seconds
 	my($t2, $t4) = gettimeofday;
 	my $e = $t2 - $t1;
 	my $e2 = $t4-$t3;
-	print STDERR "Spent $e.$e2 in work_queue_wait\n"; 
 	my $stats = new work_queue::work_queue_stats();
 	work_queue::work_queue_get_stats($queue, $stats); 	
 	my $init = work_queue::work_queue_stats::swig_workers_init_get($stats);
@@ -480,19 +443,14 @@ while(!work_queue::work_queue_empty($queue)) {
 	my $treceived = "0";# = work_queue::work_queue_stats::;
 	
 	my ($seconds,$microseconds) = gettimeofday; 
-	#print "init $init, ready $ready, busy $busy\n";
 	if($seconds - $old_seconds > 5){ 
 		print LOG "$seconds.$microseconds $init $ready $busy $running $waiting $complete $tdispatched $tcomplete $tjoined $tremoved $tsent $treceived\n";
 		print "$seconds.$microseconds $init $ready $busy $running $waiting $complete $tdispatched $tcomplete $tjoined $tremoved $tsent $treceived\n";
 		$old_seconds = $seconds;
 	}
 
-	#fprintf(logfile, "%02lf %d %d %d %d %d %d %d %d %d %d %lld %lld\n", timestamp_get()/1000000.0, s.workers_init, s.workers_ready, s.workers_busy, s.tasks_running, s.tasks_waiting, s.tasks_complete, s.total_tasks_dispatched, s.total_tasks_complete, s.total_workers_joined, s.total_workers_removed, s.total_bytes_sent, s.total_bytes_received);
-
-	#print $queue->{workers_in_state}[0]."\n";
 	if(defined($task)) {
 		print "Task defined\n";
- 		#print LOG "$seconds.$microseconds $init $ready $busy $running $waiting $complete $tdispatched $tcomplete $tjoined $tremoved $tsent $treceived\n";
 		my $counter = work_queue::work_queue_task::swig_tag_get($task);
 		my $output = work_queue::work_queue_task::swig_output_get($task);
 		my $host = work_queue::work_queue_task::swig_host_get($task);
@@ -532,23 +490,17 @@ while(!work_queue::work_queue_empty($queue)) {
 		else {
 			### save the worker's output for later dissection
 			$/ = "";
-			#open(HANDEL, ">".$counter.".output");
-			#print HANDEL $output;
-			#close(HANDEL);
 
 			if($retStatus == -1) {
 				print "failed, resubmitting tier $counter\n";
 				$tier = ${retrieve($counter."_todo.tier")};
-				
-				### preserve the old, failed tier file
-				#`mv "$counter"_todo.tier "$counter"_todo.tier.old`; # this syntax works but makes no sense
 				
 				### if it failed, we want to force recomputation
 				$tier->CTL_OPT->{ 'force' } = 1; 
 				nstore \$tier, ($counter."_todo.tier");
 					
 			}
-			### general completion?
+			### general completion
 			else { 
 				print "completed, not terminated $counter, returned $retStatus\n";
 			}
@@ -557,13 +509,8 @@ while(!work_queue::work_queue_empty($queue)) {
 		
 		work_queue::work_queue_task_delete($task);
 		
-	} else { #print "task not defined \n"; 
+	} else { #
 	}
-	
-	#if($tiersTerm == $tierLimit) {
-	#	print "\n".time." :: maker_wq hit limit of $tierLimit, bailing... \n";
-	#	exit;
-	#}
 	
 	
 	while ( work_queue::work_queue_hungry($queue) && $tierCtr < $highestTier) { # while
@@ -571,8 +518,6 @@ while(!work_queue::work_queue_empty($queue)) {
 		BuildSubmit(1);
 	}
 	
-	#print "\n";
-	#$old_seconds = $seconds; 
 	
 }
 
@@ -582,7 +527,7 @@ close(LOG);
 
 print STDERR "\n\nMaker is now finished!!!\n\n" unless($main::qq);
 
-#clean up all chilren processes
+#clean up all children processes
 Proc::Signal::reap_children_by_name(9, 'maintain.pl');
 
 exit(0);

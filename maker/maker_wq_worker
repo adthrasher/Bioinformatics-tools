@@ -1,21 +1,18 @@
+#Maker Copyright University of Utah
 #
-#Copyright (C) 2012- The University of Notre Dame
+#Work Queue components - Copyright (C) 2012- The University of Notre Dame
 #This software is distributed under the GNU General Public License.
 #See the file COPYING for details.
 #
+
 
 #!/usr/bin/env perl
 use strict "vars";
 use strict "refs";
 use warnings;
 
-### ZTM
-#push(@INC, "/afs/nd.edu/user37/ccl/software/external/maker-203/WQ/bin");
-#push(@INC, "/afs/nd.edu/user37/ccl/software/external/bioperl/include");
 
 use FindBin;
-#use lib "$FindBin::Bin/../lib";
-#use lib "$FindBin::Bin/../perl/lib";
 use vars qw($RANK $LOG $CMD_ARGS);
 
 
@@ -64,8 +61,6 @@ use Cwd;
 use FileHandle;
 use File::Path;
 use Getopt::Long qw(:config no_ignore_case);
-#use File::Temp qw(tempfile tempdir);
-#use Bio::DB::Fasta;
 use GI;
 use Dumper::GFF::GFFV3;
 use Iterator::Any;
@@ -88,12 +83,7 @@ use Proc::Signal;
 ### begin ztm code
 
 use Storable qw(nfreeze nstore thaw retrieve);
-#use Digest::MD5 qw(md5_hex);
 
-### @INC is modified at top of script
-
-#use WQ;
-#use work_queue;
 use Data::Dumper;
 
 my $numArgs = $#ARGV + 1;
@@ -110,22 +100,12 @@ my $inFile = $counter."_todo.tier";
 ###my $outFile = $counter.".fasta";
 	
 $tier = ${retrieve($inFile)};
-#chdir '/chirp/cclws08.cse.nd.edu:9095/';
 
 print Dumper($tier);
 
 	print time." :: Worker $counter :: starting \n";
 	$tier->run_all;
 	print time." :: Worker $counter :: finished \n";
-	#nstore \$tier, $outFile;
-	# print $tier->fasta;
-	
-	#print"Worker $counter :: writing fasta :: ";
-	#$/ = ""; #undef $/
-	#open(HANDEL, ">$outFile");
-	#print HANDEL $tier->fasta;
-	#close(HANDEL);	
-	#print "finished writing fasta \n";
 	
 	if($tier->failed) { print "EXIT:-1 \n"; exit -1; }
 	elsif($tier->terminated) { print "EXIT:1 \n"; exit 1; }
