@@ -472,7 +472,6 @@ while(!work_queue::work_queue_empty($queue)) {
 			$tiersTerm++;
 			print "finished tier $counter, $tiersTerm done so far \n";
 			unlink "$counter\_todo.tier" or warn "Could not unlink $counter\_todo.tier: $!\n";
-			#if(-e "$counter.output"){`mv "$counter".output "$counter".output.completed`; }
 		}
 		### tier resubmission on failure
 		else {
